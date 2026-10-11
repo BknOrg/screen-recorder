@@ -1,0 +1,60 @@
+<resources>
+    <string name="app_name">Perekam layar</string>
+    <string name="tile_name">Perekam layar</string>
+    <string name="tile_desc">Merekam aktivitas layar</string>
+    <string name="tile_recording">Sedang merekam…</string>
+
+    <!-- Notification -->
+    <string name="notification_channel_name">Perekaman Layar</string>
+    <string name="notification_channel_desc">Menampilkan status perekaman layar yang sedang berjalan</string>
+    <string name="notification_title_recording">Merekam layar…</string>
+    <string name="notification_title_paused">Perekaman dijeda</string>
+    <string name="action_pause">Jeda</string>
+    <string name="action_resume">Lanjutkan</string>
+    <string name="action_stop">Hentikan</string>
+
+    <!-- Prompt Dialog -->
+    <string name="prompt_title">Mulai merekam dengan Perekam Layar?</string>
+    <string name="prompt_subtitle">Perekam layar akan merekam semua yang ditampilkan di layar Anda atau diputar dari perangkat Anda.</string>
+    <string name="prompt_sound_header">Pengaturan suara</string>
+    <string name="sound_none">Tanpa suara</string>
+    <string name="sound_media">Suara media</string>
+    <string name="sound_media_desc">Merekam suara dari game, video, dan aplikasi</string>
+    <string name="sound_media_mic">Suara media dan mikrofon</string>
+    <string name="sound_media_mic_desc">Merekam suara media ditambah suara Anda melalui mikrofon</string>
+    <string name="action_start_record">Mulai merekam</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_skip">Lewati</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Pengaturan perekam layar</string>
+    <string name="settings_video_quality">Kualitas video</string>
+    <string name="settings_video_quality_desc">Pilih resolusi video rekaman</string>
+    <string name="settings_frame_rate">Kecepatan bingkai</string>
+    <string name="settings_frame_rate_desc">Pilih frame per detik (FPS)</string>
+    <string name="settings_countdown">Hitung mundur sebelum merekam</string>
+    <string name="settings_countdown_desc">Durasi hitungan mundur sebelum rekaman dimulai</string>
+    <string name="settings_save_location">Lokasi penyimpanan</string>
+    <string name="settings_save_location_value">DCIM/Screen recordings (Galeri Samsung)</string>
+
+    <!-- Permissions -->
+    <string name="permission_title">Izin diperlukan</string>
+    <string name="permission_overlay_title">Tampilkan di atas aplikasi lain</string>
+    <string name="permission_overlay_desc">Diperlukan untuk menampilkan bilah kontrol mengambang dan coretan layar One UI.</string>
+    <string name="permission_audio_title">Rekam audio</string>
+    <string name="permission_audio_desc">Diperlukan untuk merekam suara mikrofon atau suara internal.</string>
+    <string name="permission_notification_title">Notifikasi</string>
+    <string name="permission_notification_desc">Diperlukan untuk menampilkan kontrol rekaman cepat di panel notifikasi.</string>
+    <string name="action_grant">Izinkan</string>
+
+    <!-- Doodle & Toolbar -->
+    <string name="doodle_undo">Urungkan</string>
+    <string name="doodle_clear">Hapus semua</string>
+    <string name="doodle_close">Tutup pena</string>
+
+    <!-- History -->
+    <string name="tab_recordings">Rekaman tersimpan</string>
+    <string name="tab_settings">Pengaturan</string>
+    <string name="no_recordings">Belum ada rekaman layar</string>
+    <string name="no_recordings_desc">Rekaman layar Anda akan disimpan di album Galeri Samsung dan muncul di sini.</string>
+</resources>
