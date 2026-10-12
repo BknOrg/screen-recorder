@@ -2,8 +2,11 @@ package com.system.screenrecorder.service
 
 import android.Manifest
 import android.app.PendingIntent
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.provider.Settings
 import android.service.quicksettings.Tile
@@ -21,8 +24,24 @@ import kotlinx.coroutines.launch
 
 class ScreenRecorderTileService : TileService() {
 
+    companion object {
+        fun requestTileUpdate(context: Context) {
+            try {
+                val componentName = ComponentName(context, ScreenRecorderTileService::class.java)
+                requestListeningState(context, componentName)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     private val serviceScope = CoroutineScope(Dispatchers.Main)
     private var stateObserverJob: Job? = null
+
+    override fun onTileAdded() {
+        super.onTileAdded()
+        updateTileState(ScreenRecorderService.recordingState.value)
+    }
 
     override fun onStartListening() {
         super.onStartListening()
@@ -49,13 +68,26 @@ class ScreenRecorderTileService : TileService() {
             RecordingState.COUNTDOWN -> {
                 tile.state = Tile.STATE_ACTIVE
                 tile.label = getString(R.string.tile_recording)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    tile.subtitle = if (state == RecordingState.PAUSED) "Dijeda" else "Merekam"
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    tile.stateDescription = if (state == RecordingState.PAUSED) "Dijeda" else "Aktif"
+                }
             }
             RecordingState.IDLE,
             RecordingState.STOPPED -> {
                 tile.state = Tile.STATE_INACTIVE
                 tile.label = getString(R.string.tile_name)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    tile.subtitle = null
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    tile.stateDescription = "Nonaktif"
+                }
             }
         }
+        tile.icon = Icon.createWithResource(this, R.drawable.ic_screen_recorder_tile)
         tile.updateTile()
     }
 
@@ -63,12 +95,26 @@ class ScreenRecorderTileService : TileService() {
         super.onClick()
         val currentState = ScreenRecorderService.recordingState.value
 
-        if (currentState == RecordingState.RECORDING || currentState == RecordingState.PAUSED) {
+        if (currentState == RecordingState.RECORDING || currentState == RecordingState.PAUSED || currentState == RecordingState.COUNTDOWN) {
             // Stop recording
             val stopIntent = Intent(this, ScreenRecorderService::class.java).apply {
                 action = ScreenRecorderService.ACTION_STOP
             }
             startService(stopIntent)
+
+            // Berikan respons visual instan agar tombol langsung redup
+            qsTile?.let { tile ->
+                tile.state = Tile.STATE_INACTIVE
+                tile.label = getString(R.string.tile_name)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    tile.subtitle = null
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    tile.stateDescription = "Nonaktif"
+                }
+                tile.icon = Icon.createWithResource(this, R.drawable.ic_screen_recorder_tile)
+                tile.updateTile()
+            }
             return
         }
 

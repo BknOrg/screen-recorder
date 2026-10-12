@@ -45,6 +45,7 @@ data class RecordingSettings(
     val frameRate: VideoFrameRate = VideoFrameRate.FPS_60,
     val countdownSeconds: Int = 3,
     val showTouches: Boolean = false,
+    val showFloatingToolbar: Boolean = true,
     val storageRelativePath: String = "DCIM/Screen recordings",
     val storageDisplayName: String = "DCIM/Screen recordings (Galeri Samsung)",
     val storageTreeUri: String = ""

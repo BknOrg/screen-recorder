@@ -1,58 +1,59 @@
 package com.system.screenrecorder.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+val LocalOneUIColors = staticCompositionLocalOf { OneUIDarkColors }
+
+object OneUITheme {
+    val colors: OneUIColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalOneUIColors.current
+}
+
+private val OneUIDarkMaterialColorScheme = darkColorScheme(
+    primary = OneUIDarkColors.accent,
+    onPrimary = Color.White,
+    background = OneUIDarkColors.background,
+    onBackground = OneUIDarkColors.textPrimary,
+    surface = OneUIDarkColors.cardBackground,
+    onSurface = OneUIDarkColors.textPrimary,
+    surfaceVariant = OneUIDarkColors.iconCircleBackground,
+    onSurfaceVariant = OneUIDarkColors.textSecondary
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+private val OneUILightMaterialColorScheme = lightColorScheme(
+    primary = OneUILightColors.accent,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    background = OneUILightColors.background,
+    onBackground = OneUILightColors.textPrimary,
+    surface = OneUILightColors.cardBackground,
+    onSurface = OneUILightColors.textPrimary,
+    surfaceVariant = OneUILightColors.iconCircleBackground,
+    onSurfaceVariant = OneUILightColors.textSecondary
 )
 
 @Composable
 fun ScreenRecorderTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val oneUIColors = if (darkTheme) OneUIDarkColors else OneUILightColors
+    val materialColorScheme = if (darkTheme) OneUIDarkMaterialColorScheme else OneUILightMaterialColorScheme
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    CompositionLocalProvider(LocalOneUIColors provides oneUIColors) {
+        MaterialTheme(
+            colorScheme = materialColorScheme,
+            typography = Typography,
+            content = content
+        )
     }
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
 }

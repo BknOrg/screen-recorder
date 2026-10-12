@@ -7,11 +7,13 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.content.res.Configuration
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,9 +24,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Layers
@@ -37,9 +44,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.system.screenrecorder.ui.theme.OneUITheme
+import com.system.screenrecorder.ui.theme.ScreenRecorderTheme
 
 class PermissionSetupActivity : ComponentActivity() {
 
@@ -75,19 +84,21 @@ class PermissionSetupActivity : ComponentActivity() {
         updatePermissionStates()
 
         setContent {
-            PermissionDialog(
-                hasOverlay = hasOverlay,
-                hasAudio = hasAudio,
-                hasNotification = hasNotification,
-                onRequestOverlay = { requestOverlayPermission() },
-                onRequestAudio = { audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
-                onRequestNotification = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                },
-                onClose = { finish() }
-            )
+            ScreenRecorderTheme {
+                PermissionDialog(
+                    hasOverlay = hasOverlay,
+                    hasAudio = hasAudio,
+                    hasNotification = hasNotification,
+                    onRequestOverlay = { requestOverlayPermission() },
+                    onRequestAudio = { audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
+                    onRequestNotification = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    },
+                    onClose = { finish() }
+                )
+            }
         }
     }
 
@@ -115,7 +126,6 @@ class PermissionSetupActivity : ComponentActivity() {
 
     private fun checkAllGranted() {
         if (hasOverlay && hasAudio && hasNotification) {
-            // All granted! Transition directly to Recording Prompt
             val intent = Intent(this, RecordPromptActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
@@ -142,87 +152,191 @@ class PermissionSetupActivity : ComponentActivity() {
         onRequestNotification: () -> Unit,
         onClose: () -> Unit
     ) {
+        val configuration = LocalConfiguration.current
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.5f))
-                .clickable { onClose() },
+                .clickable { onClose() }
+                .systemBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
             Card(
                 modifier = Modifier
+                    .widthIn(max = if (isLandscape) 640.dp else 440.dp)
                     .fillMaxWidth(0.92f)
-                    .clickable(enabled = false) {},
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {},
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF222428) // One UI Dark Dialog Surface
+                    containerColor = OneUITheme.colors.dialogSurface
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    Text(
-                        text = "Izin Perekam Layar",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Agar berfungsi seperti fitur bawaan Samsung, aplikasi memerlukan izin berikut sekali saja.",
-                        fontSize = 14.sp,
-                        color = Color(0xFFB0B0B8),
-                        lineHeight = 20.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Permission Items
-                    PermissionItem(
-                        title = "Tampilkan di atas aplikasi lain",
-                        desc = "Untuk bilah kontrol melayang & coretan layar",
-                        icon = Icons.Rounded.Layers,
-                        isGranted = hasOverlay,
-                        onClick = onRequestOverlay
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    PermissionItem(
-                        title = "Mikrofon",
-                        desc = "Untuk merekam audio saat merekam layar",
-                        icon = Icons.Rounded.Mic,
-                        isGranted = hasAudio,
-                        onClick = onRequestAudio
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    PermissionItem(
-                        title = "Notifikasi",
-                        desc = "Untuk kontrol rekaman di panel notifikasi",
-                        icon = Icons.Rounded.Notifications,
-                        isGranted = hasNotification,
-                        onClick = onRequestNotification
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
+                if (isLandscape) {
+                    // Landscape: Dual-column responsive layout
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 22.dp, vertical = 18.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.Top
                     ) {
-                        Button(
-                            onClick = onClose,
-                            shape = RoundedCornerShape(20.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF38383E)
-                            )
+                        // Left Column: Title, Subtitle, Close Button
+                        Column(
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Text(text = "Tutup", color = Color.White)
+                            Text(
+                                text = "Izin Perekam Layar",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = OneUITheme.colors.textPrimary
+                            )
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = "Agar berfungsi seperti fitur bawaan Samsung, aplikasi memerlukan izin berikut sekali saja.",
+                                fontSize = 12.sp,
+                                color = OneUITheme.colors.textSecondary,
+                                lineHeight = 17.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                Button(
+                                    onClick = onClose,
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = OneUITheme.colors.iconCircleBackground
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Tutup",
+                                        color = OneUITheme.colors.textPrimary,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        // Right Column: Permission items
+                        Column(
+                            modifier = Modifier.weight(1.2f)
+                        ) {
+                            PermissionItem(
+                                title = "Tampilkan di atas aplikasi lain",
+                                desc = "Untuk bilah kontrol melayang & coretan layar",
+                                icon = Icons.Rounded.Layers,
+                                isGranted = hasOverlay,
+                                isCompact = true,
+                                onClick = onRequestOverlay
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            PermissionItem(
+                                title = "Mikrofon",
+                                desc = "Untuk merekam audio saat merekam layar",
+                                icon = Icons.Rounded.Mic,
+                                isGranted = hasAudio,
+                                isCompact = true,
+                                onClick = onRequestAudio
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            PermissionItem(
+                                title = "Notifikasi",
+                                desc = "Untuk kontrol rekaman di panel notifikasi",
+                                icon = Icons.Rounded.Notifications,
+                                isGranted = hasNotification,
+                                isCompact = true,
+                                onClick = onRequestNotification
+                            )
+                        }
+                    }
+                } else {
+                    // Portrait: Single vertical column with verticalScroll
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(24.dp)
+                    ) {
+                        Text(
+                            text = "Izin Perekam Layar",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OneUITheme.colors.textPrimary
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Agar berfungsi seperti fitur bawaan Samsung, aplikasi memerlukan izin berikut sekali saja.",
+                            fontSize = 14.sp,
+                            color = OneUITheme.colors.textSecondary,
+                            lineHeight = 20.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        PermissionItem(
+                            title = "Tampilkan di atas aplikasi lain",
+                            desc = "Untuk bilah kontrol melayang & coretan layar",
+                            icon = Icons.Rounded.Layers,
+                            isGranted = hasOverlay,
+                            isCompact = false,
+                            onClick = onRequestOverlay
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        PermissionItem(
+                            title = "Mikrofon",
+                            desc = "Untuk merekam audio saat merekam layar",
+                            icon = Icons.Rounded.Mic,
+                            isGranted = hasAudio,
+                            isCompact = false,
+                            onClick = onRequestAudio
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        PermissionItem(
+                            title = "Notifikasi",
+                            desc = "Untuk kontrol rekaman di panel notifikasi",
+                            icon = Icons.Rounded.Notifications,
+                            isGranted = hasNotification,
+                            isCompact = false,
+                            onClick = onRequestNotification
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                onClick = onClose,
+                                shape = RoundedCornerShape(20.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = OneUITheme.colors.iconCircleBackground
+                                )
+                            ) {
+                                Text(text = "Tutup", color = OneUITheme.colors.textPrimary)
+                            }
                         }
                     }
                 }
@@ -236,21 +350,25 @@ class PermissionSetupActivity : ComponentActivity() {
         desc: String,
         icon: ImageVector,
         isGranted: Boolean,
+        isCompact: Boolean = false,
         onClick: () -> Unit
     ) {
+        val grantedCircleBg = if (OneUITheme.colors.isDark) Color(0xFF1E3A28) else Color(0xFFD4EDDA)
+        val defaultCircleBg = OneUITheme.colors.iconCircleBackground
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF2C2C30), RoundedCornerShape(16.dp))
+                .background(OneUITheme.colors.cardBackground, RoundedCornerShape(16.dp))
                 .clickable(enabled = !isGranted) { onClick() }
-                .padding(14.dp),
+                .padding(if (isCompact) 10.dp else 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(if (isCompact) 32.dp else 40.dp)
                     .background(
-                        if (isGranted) Color(0xFF285C38) else Color(0xFF3A3A40),
+                        if (isGranted) grantedCircleBg else defaultCircleBg,
                         CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -258,33 +376,33 @@ class PermissionSetupActivity : ComponentActivity() {
                 Icon(
                     imageVector = if (isGranted) Icons.Rounded.CheckCircle else icon,
                     contentDescription = null,
-                    tint = if (isGranted) Color(0xFF4CD964) else Color.White,
-                    modifier = Modifier.size(22.dp)
+                    tint = if (isGranted) OneUITheme.colors.successText else OneUITheme.colors.accent,
+                    modifier = Modifier.size(if (isCompact) 18.dp else 22.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(if (isCompact) 10.dp else 14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    fontSize = 15.sp,
+                    fontSize = if (isCompact) 13.sp else 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White
+                    color = OneUITheme.colors.textPrimary
                 )
                 Text(
                     text = desc,
-                    fontSize = 12.sp,
-                    color = Color(0xFFA0A0A8)
+                    fontSize = if (isCompact) 11.sp else 12.sp,
+                    color = OneUITheme.colors.textSecondary
                 )
             }
 
             if (!isGranted) {
                 Text(
                     text = "Izinkan",
-                    fontSize = 13.sp,
+                    fontSize = if (isCompact) 12.sp else 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4C8DF5),
+                    color = OneUITheme.colors.accent,
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }

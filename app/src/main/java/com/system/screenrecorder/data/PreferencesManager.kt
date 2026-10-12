@@ -18,6 +18,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_FPS = "pref_fps"
         private const val KEY_COUNTDOWN = "pref_countdown"
         private const val KEY_SHOW_TOUCHES = "pref_show_touches"
+        private const val KEY_SHOW_FLOATING_TOOLBAR = "pref_show_floating_toolbar"
         private const val KEY_STORAGE_PATH = "pref_storage_path"
         private const val KEY_STORAGE_DISPLAY = "pref_storage_display"
         private const val KEY_STORAGE_TREE_URI = "pref_storage_tree_uri"
@@ -46,6 +47,10 @@ class PreferencesManager(context: Context) {
         get() = prefs.getBoolean(KEY_SHOW_TOUCHES, false)
         set(value) = prefs.edit().putBoolean(KEY_SHOW_TOUCHES, value).apply()
 
+    var showFloatingToolbar: Boolean
+        get() = prefs.getBoolean(KEY_SHOW_FLOATING_TOOLBAR, true)
+        set(value) = prefs.edit().putBoolean(KEY_SHOW_FLOATING_TOOLBAR, value).apply()
+
     var storageRelativePath: String
         get() = prefs.getString(KEY_STORAGE_PATH, "DCIM/Screen recordings") ?: "DCIM/Screen recordings"
         set(value) = prefs.edit().putString(KEY_STORAGE_PATH, value).apply()
@@ -66,6 +71,7 @@ class PreferencesManager(context: Context) {
             frameRate = frameRate,
             countdownSeconds = countdownSeconds,
             showTouches = showTouches,
+            showFloatingToolbar = showFloatingToolbar,
             storageRelativePath = storageRelativePath,
             storageDisplayName = storageDisplayName,
             storageTreeUri = storageTreeUri

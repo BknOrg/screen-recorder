@@ -68,6 +68,11 @@ class ScreenRecorderService : Service() {
     private var tickerJob: Job? = null
     private var currentSeconds = 0L
 
+    private fun updateRecordingState(newState: RecordingState) {
+        _recordingState.value = newState
+        ScreenRecorderTileService.requestTileUpdate(this)
+    }
+
     override fun onCreate() {
         super.onCreate()
         recorderEngine = ScreenRecordingEngine(this)
@@ -80,7 +85,7 @@ class ScreenRecorderService : Service() {
         setupOverlayListeners()
 
         recorderEngine.onRecordingStoppedListener = { uri ->
-            _recordingState.value = RecordingState.STOPPED
+            updateRecordingState(RecordingState.STOPPED)
             stopForeground(STOP_FOREGROUND_REMOVE)
             floatingToolbar.dismiss()
             doodleOverlay.dismiss()
@@ -164,7 +169,7 @@ class ScreenRecorderService : Service() {
             startForeground(NOTIFICATION_ID, initialNotification)
         }
 
-        _recordingState.value = RecordingState.COUNTDOWN
+        updateRecordingState(RecordingState.COUNTDOWN)
         val countdownSec = prefsManager.countdownSeconds
 
         if (countdownSec > 0) {
@@ -185,18 +190,20 @@ class ScreenRecorderService : Service() {
         val started = recorderEngine.startRecording(resultCode, resultData, settings)
 
         if (started) {
-            _recordingState.value = RecordingState.RECORDING
+            updateRecordingState(RecordingState.RECORDING)
             currentSeconds = 0L
             _durationSeconds.value = 0L
 
-            floatingToolbar.showToolbar()
-            floatingToolbar.updateDuration(0L)
-            floatingToolbar.updatePausedState(false)
+            if (settings.showFloatingToolbar) {
+                floatingToolbar.showToolbar()
+                floatingToolbar.updateDuration(0L)
+                floatingToolbar.updatePausedState(false)
+            }
 
             startTicker()
         } else {
             Toast.makeText(this, "Gagal memulai perekaman layar", Toast.LENGTH_SHORT).show()
-            _recordingState.value = RecordingState.IDLE
+            updateRecordingState(RecordingState.IDLE)
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
@@ -210,7 +217,9 @@ class ScreenRecorderService : Service() {
                 if (_recordingState.value == RecordingState.RECORDING) {
                     currentSeconds++
                     _durationSeconds.value = currentSeconds
-                    floatingToolbar.updateDuration(currentSeconds)
+                    if (floatingToolbar.isShowing) {
+                        floatingToolbar.updateDuration(currentSeconds)
+                    }
                     updateNotification(currentSeconds, false)
                 }
             }
@@ -219,15 +228,19 @@ class ScreenRecorderService : Service() {
 
     private fun pauseRecording() {
         recorderEngine.pauseRecording()
-        _recordingState.value = RecordingState.PAUSED
-        floatingToolbar.updatePausedState(true)
+        updateRecordingState(RecordingState.PAUSED)
+        if (floatingToolbar.isShowing) {
+            floatingToolbar.updatePausedState(true)
+        }
         updateNotification(currentSeconds, true)
     }
 
     private fun resumeRecording() {
         recorderEngine.resumeRecording()
-        _recordingState.value = RecordingState.RECORDING
-        floatingToolbar.updatePausedState(false)
+        updateRecordingState(RecordingState.RECORDING)
+        if (floatingToolbar.isShowing) {
+            floatingToolbar.updatePausedState(false)
+        }
         updateNotification(currentSeconds, false)
     }
 
@@ -333,7 +346,7 @@ class ScreenRecorderService : Service() {
         if (recorderEngine.isRecordingActive()) {
             recorderEngine.stopRecording()
         }
-        _recordingState.value = RecordingState.IDLE
+        updateRecordingState(RecordingState.IDLE)
         tickerJob?.cancel()
         floatingToolbar.dismiss()
         doodleOverlay.dismiss()
